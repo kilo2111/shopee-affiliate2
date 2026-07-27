@@ -173,8 +173,11 @@
 
         if (!res.ok) throw new Error(data.error || 'Có lỗi xảy ra');
 
-        document.getElementById('linkBox').innerText = data.shortLink;
-        resultEl.classList.add('show');
+		document.getElementById('linkBox').innerText = data.shortLink;
+		resultEl.classList.add('show');
+
+		// Xóa link đã nhập sau khi tạo thành công
+		document.getElementById('product').value = '';
       } catch (err) {
         errorEl.innerText = err.message;
         errorEl.style.display = 'block';
