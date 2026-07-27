@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tạo Link Affiliate Shopee</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #ee4d2d;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .box {
+      background: white;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 14px;
+      padding: 28px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+    }
+    h1 {
+      text-align: center;
+      color: #ee4d2d;
+      font-size: 22px;
+      margin-bottom: 6px;
+    }
+    p.sub {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 22px;
+    }
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #333;
+    }
+    textarea, select {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+      margin-bottom: 16px;
+    }
+    textarea { height: 80px; resize: vertical; }
+    button.main {
+      width: 100%;
+      background: #ee4d2d;
+      color: white;
+      border: none;
+      padding: 13px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button.main:hover { background: #d73211; }
+    button.main:disabled { background: #ccc; cursor: not-allowed; }
+    .result { display: none; margin-top: 20px; }
+    .result.show { display: block; }
+    .link-box {
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      word-break: break-all;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    .btns { display: flex; gap: 10px; }
+    .btns button {
+      flex: 1;
+      font-size: 14px;
+      padding: 11px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn-copy { background: #ee4d2d; color: white; }
+    .btn-open { background: #555; color: white; }
+    .loading, .error {
+      text-align: center;
+      font-size: 14px;
+      margin-top: 12px;
+      display: none;
+    }
+    .error { color: #c00; }
+    .note {
+      margin-top: 18px;
+      font-size: 12px;
+      color: #777;
+      line-height: 1.5;
+      background: #fff5f2;
+      padding: 12px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Tạo Link Affiliate Shopee</h1>
+    <p class="sub">Tự động lấy link gốc từ link rút gọn</p>
+
+    <label>Link sản phẩm (rút gọn hoặc dài đều được)</label>
+    <textarea id="product" placeholder="Dán link Shopee vào đây..."></textarea>
+
+    <label>Sub ID</label>
+    <select id="subId">
+      <option value="nhom" selected>nhóm</option>
+      <option value="facebook">Facebook</option>
+      <option value="tiktok">TikTok</option>
+      <option value="zalo">Zalo</option>
+      <option value="youtube">YouTube</option>
+      <option value="instagram">Instagram</option>
+      <option value="">Không dùng Sub ID</option>
+    </select>
+
+    <button class="main" id="btn" onclick="taoLink()">Tạo link Affiliate</button>
+
+    <div class="loading" id="loading">Đang lấy link gốc và tạo link...</div>
+    <div class="error" id="error"></div>
+
+    <div class="result" id="result">
+      <label>Link Affiliate:</label>
+      <div class="link-box" id="linkBox"></div>
+      <div class="btns">
+        <button class="btn-copy" onclick="copyLink()">Sao chép</button>
+        <button class="btn-open" onclick="openLink()">Mở thử</button>
+      </div>
+    </div>
+
+    <div class="note">
+      Hỗ trợ cả link rút gọn và link dài. Hệ thống sẽ tự lấy link gốc rồi gắn Affiliate ID của bạn.
+    </div>
+  </div>
+
+  <script>
+    async function taoLink() {
+      const url = document.getElementById('product').value.trim();
+      const subId = document.getElementById('subId').value;
+      const btn = document.getElementById('btn');
+      const loading = document.getElementById('loading');
+      const errorEl = document.getElementById('error');
+      const resultEl = document.getElementById('result');
+
+      if (!url) {
+        alert('Vui lòng dán link sản phẩm!');
+        return;
+      }
+
+      btn.disabled = true;
+      loading.style.display = 'block';
+      errorEl.style.display = 'none';
+      resultEl.classList.remove('show');
+
+      try {
+        const res = await fetch('/.netlify/functions/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url, subId })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'Có lỗi xảy ra');
+
+        document.getElementById('linkBox').innerText = data.shortLink;
+        resultEl.classList.add('show');
+      } catch (err) {
+        errorEl.innerText = err.message;
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        loading.style.display = 'none';
+      }
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(document.getElementById('linkBox').innerText)
+        .then(() => alert('Đã sao chép!'));
+    }
+
+    function openLink() {
+      window.open(document.getElementById('linkBox').innerText, '_blank');
+    }
+  </script>
+</body>
+</html>
